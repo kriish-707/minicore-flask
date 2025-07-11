@@ -1,0 +1,68 @@
+# minicore_site_with_points.py
+from flask import Flask, render_template_string, request, redirect, url_for, session
+
+app = Flask(__name__)
+app.secret_key = 'minicore_secret_key'
+
+# Sample product
+def get_product():
+    return {"id": 1, "name": "Leather Pack", "price": 200, "points": 100}
+
+# Home page with product listing
+@app.route('/')
+def home():
+    points = session.get('points', 0)
+    product = get_product()
+    return render_template_string("""
+    <!DOCTYPE html>
+    <html lang="en">
+    <head><title>MiniCore Computers</title></head>
+    <body>
+        <h1>Welcome to MiniCoreComputers.com</h1>
+        <h2>Product for Sale</h2>
+        <p><strong>{{ product.name }}</strong> - ₹{{ product.price }} <br>
+        Buy now and get {{ product.points }} reward points!</p>
+        <a href="{{ url_for('purchase') }}">Buy for ₹{{ product.price }}</a>
+        <hr>
+        <h3>Your Points: {{ points }}</h3>
+        <a href="{{ url_for('redeem') }}">Redeem Points</a>
+    </body>
+    </html>
+    """, product=product, points=points)
+
+# Simulated purchase
+@app.route('/purchase')
+def purchase():
+    product = get_product()
+    points = session.get('points', 0)
+    points += product['points']
+    session['points'] = points
+    return redirect(url_for('home'))
+
+# Redeem points for another item (simple simulation)
+@app.route('/redeem')
+def redeem():
+    points = session.get('points', 0)
+    message = ""
+    if points >= 100:
+        points -= 100
+        session['points'] = points
+        message = "You redeemed 100 points for a free item!"
+    else:
+        message = "Not enough points to redeem."
+    return render_template_string("""
+    <!DOCTYPE html>
+    <html lang="en">
+    <head><title>Redeem</title></head>
+    <body>
+        <h1>{{ message }}</h1>
+        <h3>Your Remaining Points: {{ points }}</h3>
+        <a href="{{ url_for('home') }}">Back to Shop</a>
+    </body>
+    </html>
+    """, message=message, points=points)
+
+# Run the app
+if __name__ == '__main__':
+    app.run(debug=True)
+
